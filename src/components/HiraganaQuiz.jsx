@@ -66,6 +66,7 @@ const HiraganaQuiz = () => {
   const [userAnswers, setUserAnswers] = useState([]);
   const [answerResult, setAnswerResult] = useState(null);
   const [currentOptions, setCurrentOptions] = useState([]);
+  const [japaneseVoice, setJapaneseVoice] = useState(null);
 
   const startQuiz = () => {
     const shuffled = [...hiragana].sort(() => Math.random() - 0.5);
@@ -75,8 +76,19 @@ const HiraganaQuiz = () => {
     setAnswerResult(null);
   };
 
+  // Load available voices and select a Japanese one
   useEffect(() => {
-    startQuiz();
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      const japanese = voices.find((voice) => voice.lang.startsWith("ja"));
+      setJapaneseVoice(japanese || null);
+    };
+
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+    };
   }, []);
 
   useEffect(() => {
@@ -99,14 +111,29 @@ const HiraganaQuiz = () => {
 
   const handleAnswer = (selected) => {
     const correctSound = shuffledHiragana[currentIndex].sound;
+    const currentSymbol = shuffledHiragana[currentIndex].symbol; // Get the Hiragana symbol
     const isCorrect = selected === correctSound;
     setUserAnswers([...userAnswers, isCorrect]);
     setAnswerResult({ isCorrect, selected });
+
+    // If correct and TTS is supported, speak the Hiragana symbol
+    if (isCorrect && "speechSynthesis" in window) {
+      const utterance = new SpeechSynthesisUtterance(currentSymbol); // Use symbol instead of sound
+      if (japaneseVoice) {
+        utterance.voice = japaneseVoice;
+      }
+      window.speechSynthesis.speak(utterance);
+    }
+
     setTimeout(() => {
       setAnswerResult(null);
       setCurrentIndex(currentIndex + 1);
     }, 1000);
   };
+
+  useEffect(() => {
+    startQuiz();
+  }, []);
 
   if (currentIndex < shuffledHiragana.length) {
     const currentSymbol = shuffledHiragana[currentIndex].symbol;
@@ -156,17 +183,16 @@ const HiraganaQuiz = () => {
                 ? "green"
                 : "red"
               : "transparent",
-            minHeight: "24px", // Reserves space for the text
-            opacity: answerResult ? 1 : 0, // Toggle visibility
-            transition: "opacity 0.2s ease", // Smooth fade effect
+            minHeight: "24px",
+            opacity: answerResult ? 1 : 0,
+            transition: "opacity 0.2s ease",
           }}
         >
           {answerResult
             ? answerResult.isCorrect
               ? "Correct!"
               : "Incorrect!"
-            : " "}{" "}
-          {/* Empty space to maintain height */}
+            : " "}
         </div>
       </div>
     );
