@@ -65,6 +65,7 @@ const HiraganaQuiz = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState([]);
   const [answerResult, setAnswerResult] = useState(null);
+  const [currentOptions, setCurrentOptions] = useState([]);
 
   const startQuiz = () => {
     const shuffled = [...hiragana].sort(() => Math.random() - 0.5);
@@ -77,6 +78,24 @@ const HiraganaQuiz = () => {
   useEffect(() => {
     startQuiz();
   }, []);
+
+  useEffect(() => {
+    if (shuffledHiragana.length > 0 && currentIndex < shuffledHiragana.length) {
+      const correctSound = shuffledHiragana[currentIndex].sound;
+      const otherIndices = getRandomIndices(
+        currentIndex,
+        2,
+        shuffledHiragana.length,
+      );
+      const incorrectSounds = otherIndices.map(
+        (index) => shuffledHiragana[index].sound,
+      );
+      const options = [correctSound, ...incorrectSounds].sort(
+        () => Math.random() - 0.5,
+      );
+      setCurrentOptions(options);
+    }
+  }, [currentIndex, shuffledHiragana]);
 
   const handleAnswer = (selected) => {
     const correctSound = shuffledHiragana[currentIndex].sound;
@@ -91,26 +110,13 @@ const HiraganaQuiz = () => {
 
   if (currentIndex < shuffledHiragana.length) {
     const currentSymbol = shuffledHiragana[currentIndex].symbol;
-    const correctSound = shuffledHiragana[currentIndex].sound;
-    const otherIndices = getRandomIndices(
-      currentIndex,
-      2,
-      shuffledHiragana.length,
-    );
-    const incorrectSounds = otherIndices.map(
-      (index) => shuffledHiragana[index].sound,
-    );
-    const options = [correctSound, ...incorrectSounds].sort(
-      () => Math.random() - 0.5,
-    );
-
     return (
       <div>
         <div style={{ fontSize: "48px", textAlign: "center", margin: "20px" }}>
           {currentSymbol}
         </div>
         <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
-          {options.map((option) => (
+          {currentOptions.map((option) => (
             <button
               key={option}
               onClick={() => handleAnswer(option)}
@@ -140,18 +146,28 @@ const HiraganaQuiz = () => {
             </button>
           ))}
         </div>
-        {answerResult && (
-          <div
-            style={{
-              textAlign: "center",
-              marginTop: "20px",
-              fontSize: "18px",
-              color: answerResult.isCorrect ? "green" : "red",
-            }}
-          >
-            {answerResult.isCorrect ? "Correct!" : "Incorrect!"}
-          </div>
-        )}
+        <div
+          style={{
+            textAlign: "center",
+            marginTop: "20px",
+            fontSize: "18px",
+            color: answerResult
+              ? answerResult.isCorrect
+                ? "green"
+                : "red"
+              : "transparent",
+            minHeight: "24px", // Reserves space for the text
+            opacity: answerResult ? 1 : 0, // Toggle visibility
+            transition: "opacity 0.2s ease", // Smooth fade effect
+          }}
+        >
+          {answerResult
+            ? answerResult.isCorrect
+              ? "Correct!"
+              : "Incorrect!"
+            : " "}{" "}
+          {/* Empty space to maintain height */}
+        </div>
       </div>
     );
   } else {
