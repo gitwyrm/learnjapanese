@@ -1,10 +1,11 @@
-import HiraganaQuiz from "./components/HiraganaQuiz";
+import Quiz from "./components/Quiz";
 import "./App.css";
+import hiragana from "./hiragana";
 
 function App() {
   return (
     <div className="card">
-      <HiraganaQuiz />
+      <Quiz tokens={hiragana} />
     </div>
   );
 }
