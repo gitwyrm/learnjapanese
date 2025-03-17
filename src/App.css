@@ -7,8 +7,16 @@
 
 .card {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
+    flex-direction: column;
     margin: 0 auto;
+    background: #2f2f2f;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+}
+
+.side-by-side {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
 }
