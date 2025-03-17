@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 const getRandomIndices = (excludeIndex, count, max) => {
   const indices = [];
@@ -18,6 +18,7 @@ const Quiz = ({ tokens }) => {
   const [answerResult, setAnswerResult] = useState(null);
   const [currentOptions, setCurrentOptions] = useState([]);
   const [japaneseVoice, setJapaneseVoice] = useState(null);
+  const voicesLoadedRef = useRef(false);
 
   const startQuiz = () => {
     const shuffled = [...tokens].sort(() => Math.random() - 0.5);
@@ -27,20 +28,46 @@ const Quiz = ({ tokens }) => {
     setAnswerResult(null);
   };
 
-  // Load available voices and select a Japanese one
   useEffect(() => {
+    let isMounted = true;
+
     const loadVoices = () => {
+      if (!isMounted) return;
+
       const voices = window.speechSynthesis.getVoices();
       const japanese = voices.find((voice) => voice.lang.startsWith("ja"));
-      setJapaneseVoice(japanese || null);
+      if (japanese) {
+        setJapaneseVoice(japanese);
+        voicesLoadedRef.current = true;
+      }
     };
 
     loadVoices();
-    window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    if (!voicesLoadedRef.current) {
+      window.speechSynthesis.addEventListener("voiceschanged", loadVoices);
+    }
+
     return () => {
-      window.speechSynthesis.onvoiceschanged = null;
+      isMounted = false;
+      window.speechSynthesis.removeEventListener("voiceschanged", loadVoices);
     };
   }, []);
+
+  const speakJapanese = (text) => {
+    if (!("speechSynthesis" in window)) return;
+
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    if (japaneseVoice) {
+      utterance.voice = japaneseVoice;
+      utterance.lang = "ja-JP";
+    }
+
+    window.speechSynthesis.speak(utterance);
+  };
 
   useEffect(() => {
     if (shuffledToken.length > 0 && currentIndex < shuffledToken.length) {
@@ -67,13 +94,9 @@ const Quiz = ({ tokens }) => {
     setUserAnswers([...userAnswers, isCorrect]);
     setAnswerResult({ isCorrect, selected });
 
-    // If correct and TTS is supported, speak the token (japanese character or word)
-    if (isCorrect && "speechSynthesis" in window) {
-      const utterance = new SpeechSynthesisUtterance(currentSymbol); // Use symbol instead of sound
-      if (japaneseVoice) {
-        utterance.voice = japaneseVoice;
-      }
-      window.speechSynthesis.speak(utterance);
+    // If correct, speak the token
+    if (isCorrect) {
+      speakJapanese(currentSymbol);
     }
 
     setTimeout(() => {
@@ -120,7 +143,7 @@ const Quiz = ({ tokens }) => {
               {option}
               {answerResult &&
                 answerResult.selected === option &&
-                (answerResult.isCorrect ? " X" : " O")}
+                (answerResult.isCorrect ? " O" : " X")}
             </button>
           ))}
         </div>
