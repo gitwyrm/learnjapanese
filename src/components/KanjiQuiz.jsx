@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 const getRandomIndices = (excludeIndex, count, max) => {
   const indices = [];
@@ -29,7 +29,7 @@ const KanjiQuiz = ({ tokens, type }) => {
     }
   };
 
-  const startQuiz = () => {
+  const startQuiz = useCallback(() => {
     let filteredTokens = tokens;
     if (type === "on'yomi" || type === "kun'yomi") {
       filteredTokens = tokens.filter((token) =>
@@ -41,11 +41,11 @@ const KanjiQuiz = ({ tokens, type }) => {
     setCurrentIndex(0);
     setUserAnswers([]);
     setAnswerResult(null);
-  };
+  }, [tokens, type]);
 
   useEffect(() => {
     startQuiz();
-  }, [tokens, type]);
+  }, [startQuiz]);
 
   useEffect(() => {
     if (shuffledTokens.length > 0 && currentIndex < shuffledTokens.length) {

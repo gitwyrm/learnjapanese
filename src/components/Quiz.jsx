@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 
 const getRandomIndices = (excludeIndex, count, max) => {
   const indices = [];
@@ -20,13 +20,13 @@ const Quiz = ({ tokens }) => {
   const [japaneseVoice, setJapaneseVoice] = useState(null);
   const voicesLoadedRef = useRef(false);
 
-  const startQuiz = () => {
+  const startQuiz = useCallback(() => {
     const shuffled = [...tokens].sort(() => Math.random() - 0.5);
     setShuffledToken(shuffled);
     setCurrentIndex(0);
     setUserAnswers([]);
     setAnswerResult(null);
-  };
+  }, [tokens]);
 
   useEffect(() => {
     let isMounted = true;
@@ -107,7 +107,7 @@ const Quiz = ({ tokens }) => {
 
   useEffect(() => {
     startQuiz();
-  }, []);
+  }, [startQuiz]);
 
   if (currentIndex < shuffledToken.length) {
     const currentSymbol = shuffledToken[currentIndex].symbol;
